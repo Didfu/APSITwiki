@@ -38,3 +38,7 @@ textarea {
 .sidebar h2 {
   margin-top: 5px;
 }
+.highlighted {
+  background-color: #FFFF00; /* Yellow background color */
+  font-weight: bold; /* Bold font */
+}

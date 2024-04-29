@@ -5,11 +5,11 @@
 {% endblock %}
 
 {% block body %}
-    <h1>All Pages</h1>
-
     <ul>
         {% for entry in entries %}
-            <li><a href="{% url 'entrypage' entry %}">{{ entry }}</a></li>
+            {% if entry == "DEPARTMENTS.md" %}
+                <li><a href="{% url 'entrypage' entry %}">{{ entry }}</a></li>
+            {% endif %}
         {% endfor %}
     </ul>
 

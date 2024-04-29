@@ -25,10 +25,6 @@
         <div class="row">
             <div class="sidebar col-lg-2 col-md-3">
                 <h2>APSITWiki</h2>
-                <form method="POST" action="/search">
-                    {% csrf_token %}
-                    <input class="search" type="text" name="q" placeholder="Search wiki">
-                </form>
                 <div>
                     <a href="{% url 'index' %}">Home</a>
                 </div>
@@ -45,6 +41,10 @@
                 {% endblock %}
             </div>
             <div class="main col-lg-10 col-md-9">
+            <form method="POST" action="/search" ></form>
+            {% csrf_token %}
+            <input class="search" type="text" name="q" placeholder="Search wiki">
+            </form>
             <form>
                 {% block body %}
                 {% endblock %}

@@ -5,13 +5,15 @@ from django.shortcuts import render, HttpResponse, redirect
 import markdown2
 import random
 from django import forms
-
+import os
+import re
 from encyclopedia import admin
 from . import util
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth import authenticate
+import math
 
 
 
@@ -27,13 +29,14 @@ class NewPageForm(forms.Form):
 # controllers
 def index(request):
     return render(request, "encyclopedia/index.html", {
-        "entries": util.list_entries()
+        "entries": [entry.strip('[]\"') for entry in util.list_entries() if entry == "DEPARTMENTS"]
     })
 
 #titlepage
 def entryPage(request, title):
     markDownData = util.get_entry(title)
     if(markDownData == None):
+        print("No such entry")
         return render(request, "encyclopedia/invalidpage.html", {
             "title" : title
         })
@@ -44,20 +47,51 @@ def entryPage(request, title):
     })
 
 #searchpage
+
 def search(request):
-    matchedList = []
-    searchQuery = request.POST.get("q")
-    entries = util.list_entries()
-    for item in entries:
-        if item.upper() == searchQuery.upper():
-            return HttpResponseRedirect(reverse("entrypage", args=[searchQuery]))
-        if searchQuery.upper() in item.upper():
-            matchedList.append(item)
-    return render(request, "encyclopedia/searchresult.html", {
-        "title": searchQuery,
-        "list": matchedList
-    })
-    
+    search_query = request.POST.get("q")
+    search_query_cleaned = re.sub(r'[<>*#]', ' ', search_query)
+    # Search within Markdown files
+    matched_results = search_in_md_files(search_query_cleaned)
+    if matched_results:
+        # Display the matched lines on the screen
+        return render(request, "encyclopedia/searchresult.html", {
+            "matched_results": matched_results, 
+            "search_query": search_query,
+            "title":search_query,
+            "filename":matched_results[0][0]
+            })
+    else:
+        # Handle case when no match is found
+        return render(request, "encyclopedia/invalidpage.html", {
+            "title" : search_query
+        })
+
+def search_in_md_files(query):
+    matched_results = []
+    # Directory where your .md files are stored
+    directory = r'C:/Users/dhruv mahyavanshi/Downloads/APSITwiki/entries'
+    for filename in os.listdir(directory):
+        if filename == "cnnd.md":
+            continue
+        if filename.endswith(".md"):
+            with open(os.path.join(directory, filename), 'r',encoding='utf-8') as file:
+                for line_number, line in enumerate(file, start=1):
+                    if query.lower() in line.lower():
+                        # If query found in line, add filename, line number, and line content to matched_results
+                        if line_number % 10 == 0:
+                            line_round = line_number - 10
+                        else:
+                            line_round = math.floor(line_number / 10) * 10
+                            # Exclude <>#* and anything between them from line content
+                        line_content = re.sub(r'<.*?>|#|\*|\[.*?\]\(.*?\)', '', line.strip())
+                        matched_results.append((filename[:-3],line_round, line_number, line_content))
+    return matched_results
+
+
+
+
+
 def createEntry(request):
     if request.method == "POST":
         formData = NewPageForm(request.POST)
@@ -108,9 +142,11 @@ def user(request):
     form = AuthenticationForm()
     username=request.POST.get('username')
     password=request.POST.get('password')
+    flag = False
     if request.method == 'POST':
         if username in admin.logindata and admin.logindata[username] == password:
                 if username == "admin":
+                    flag = True
                     return redirect('index')
                 else:
                     return redirect('index')
