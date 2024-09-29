@@ -70,7 +70,7 @@ def search(request):
 def search_in_md_files(query):
     matched_results = []
     # Directory where your .md files are stored
-    directory = r'C:/Users/dhruv mahyavanshi/Downloads/APSITwiki/entries'
+    directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'entries')
     for filename in os.listdir(directory):
         if filename == "cnnd.md":
             continue
